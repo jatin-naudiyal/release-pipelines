@@ -1,0 +1,40 @@
+name: Prod Workflow
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: 'Release version tag to deploy (e.g., v1.0.0)'
+        required: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy-release-to-prod:
+    name: Deploy Release to PROD
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Extract Tag/Version - Release Event
+        if: github.event_name == 'release'
+        run: |
+          echo "VERSION_NUM=${{github.event.release.name}}" >> $GITHUB_ENV
+
+      - name: Extract Tag/Version - Workflow Dispatch Event
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "VERSION_NUM=${{github.event.inputs.releaseVersion}}" >> $GITHUB_ENV
+
+      - name: Deploy to PROD
+        run: |
+          echo "Deploying to PROD environment..."
+          echo "Deploying pre-built image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION_NUM }}"
+          # Replace with your actual deployment command. No build step!
