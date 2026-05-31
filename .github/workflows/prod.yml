@@ -2,7 +2,7 @@ name: Prod Workflow
 
 on:
   release:
-    types: [published]
+    types: [released]
   workflow_dispatch:
     inputs:
       releaseVersion:
@@ -18,10 +18,22 @@ jobs:
     name: Deploy Release to PROD
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Merge qa to main
+        uses: octokit/request-action@v2.0.12
+        id: mergeMain
+        with:
+          route: POST /repos/:repository/merges
+          repository: ${{ github.repository }}
+          mediaType: '{"Accept": "application/vnd.github.v3+json"}'
+          base: "main"
+          head: "qa"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Tag/Version - Release Event
         if: github.event_name == 'release'
